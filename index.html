@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Srdiečko pre lucku</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #111;
+  }
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+  }
+  .btn {
+    position: absolute;
+    bottom: 6%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    font-size: 1.5rem;
+    border: none;
+    border-radius: 10px;
+    background-color: #e63946;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: background-color 0.3s, transform 0.2s;
+    max-width: 300px;
+    text-align: center;
+  }
+  .btn:hover {
+    background-color: #c1121f;
+    transform: translateX(-50%) scale(1.05);
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+<button id="startBtn" class="btn">💖 Spusti animáciu</button>
+<button id="changeBtn" class="btn" style="display:none;">🔄 Zmeniť text</button>
+<button id="restartBtn" class="btn" style="display:none;">🔁 Spusti odznova</button>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const startBtn = document.getElementById("startBtn");
+const changeBtn = document.getElementById("changeBtn");
+const restartBtn = document.getElementById("restartBtn");
+
+// texty
+let texts = [
+  "Toto srdiečko patrí niekomu výnimočnému",
+  [ // časť 1
+    "Lucka, patrí tebe.",
+    "Nikdy som si ani vo sne nepredstavoval,",
+    "že budem mať raz také úžasné dievča, ako si ty.",
+    "Doteraz si pamätám naše prvé stretnutie, keď si ma",
+    "očarila tým rainbow flickom, čo si vtedy spravila na ihrisku.",
+    "Už vtedy som vravel Dominovi, že tá Lucka je super,",
+    "čo mi aj potvrdil. A keď mi v septembri Domino napísal:",
+    "„Poď von, beriem Lily a príde aj Lucka,“ tak som sa kus zľakol,",
+    "či nepríde Majorka. Ale keď som ťa videl, bol som strašne rád."
+  ],
+  [ // časť 2
+    "Som strašne rád, že sa všetko stalo tak, ako sa stalo,",
+    "a hlavne že som ti vtedy zobral telefón a spravil fotky,",
+    "lebo inak by som sa asi nikdy neodvážil ti napísať.",
+    "Ten deň, keď som išiel po teba na motorke, som sa modlil,",
+    "nech ti nie je zima a aby sa ti to páčilo. Som rád, že sa páčilo.",
+    "A náš date na hrade? To bol najlepší, aký som kedy mal.",
+    "A potom na chate už vtedy som vedel, že ťa chcem,",
+    "že ty si tá pravá."
+  ],
+  [ // časť 3
+    "Neľutujem nič, čo sa stalo. Som strašne rád,",
+    "že práve ty si moja frajerka.",
+    "Si úžasná, krásna, výnimočná a jedinečná.",
+    "A áno, aj stehná a cicky máš fakt dobré.",
+    "Proste si moja vysnívaná frajerka.",
+    "A viem, že nič krajšie v živote sa mi už nestane.",
+    "Ľúbim ťa fest. A neboj, nikdy sa ma nezbavíš, až do staroby ❤️"
+  ]
+];
+
+// 🌟 Responsívny canvas
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// 🔹 Kreslenie srdiečka
+function kresliSrdiecko(callback) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.lineWidth = Math.max(canvas.width, canvas.height) / 200;
+  ctx.strokeStyle = "#e63946";
+  ctx.beginPath();
+
+  let t = 0;
+  const max = 2 * Math.PI;
+  const step = 0.02;
+  const scale = Math.min(canvas.width, canvas.height) / 25;
+
+  const interval = setInterval(() => {
+    let x = 16 * Math.pow(Math.sin(t), 3);
+    let y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    const drawX = canvas.width / 2 + x * scale;
+    const drawY = canvas.height / 2 - y * scale;
+    if (t === 0) ctx.moveTo(drawX, drawY);
+    else ctx.lineTo(drawX, drawY);
+    ctx.stroke();
+    t += step;
+    if (t > max) {
+      clearInterval(interval);
+      ctx.fillStyle = "#e63946";
+      ctx.fill();
+      if (callback) callback();
+    }
+  }, 20);
+}
+
+// 🔹 Funkcia pre písanie textu po písmenkách
+function typeTextByLetter(lines, callback, isCenter=false, smaller=false) {
+  let fontSize = Math.floor(Math.min(canvas.width, canvas.height)/30);
+  if(smaller) fontSize -= 3;
+  ctx.font = `bold ${fontSize}px Courier New`;
+  ctx.fillStyle = "white";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+
+  // 🔥 ROZDIELNE OFFSETY PRE PRVÝ TEXT A OSTATNÉ
+  let offsetX, offsetY;
+
+  if (isCenter) {
+    // 🔸 prvý text
+    offsetX = canvas.width / 2 - canvas.width * 0.15;
+    offsetY = canvas.height / 2 - fontSize / 2;
+  } else {
+    // 🔸 všetky ďalšie tri texty
+    offsetX = canvas.width / 2 - Math.min(canvas.width, canvas.height) / 3.2-125;
+    offsetY = canvas.height / 2 - Math.min(canvas.height, canvas.height) / 3 + 100; 
+    // ak chceš ešte nižšie/zmenšiť → uprav -50
+  }
+
+  let lineIndex = 0;
+  let charIndex = 0;
+
+  function drawNextChar() {
+    if (lineIndex >= lines.length) {
+      if (callback) callback();
+      return;
+    }
+
+    const line = lines[lineIndex];
+    ctx.fillText(
+      line.charAt(charIndex),
+      offsetX + charIndex * (fontSize * 0.55),
+      offsetY + lineIndex * (fontSize + 5)
+    );
+
+    charIndex++;
+    if (charIndex >= line.length) {
+      charIndex = 0;
+      lineIndex++;
+    }
+    setTimeout(drawNextChar, 35);
+  }
+
+  drawNextChar();
+}
+
+// 🔹 Reset animácie
+function resetAnimation() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  startBtn.style.display = "block";
+  changeBtn.style.display = "none";
+  restartBtn.style.display = "none";
+}
+
+// 🔹 Buttony a postupné zobrazovanie textu
+let step = 0;
+
+startBtn.addEventListener("click", () => {
+  startBtn.style.display = "none";
+  kresliSrdiecko(() => {
+    typeTextByLetter([texts[0]], () => { changeBtn.style.display = "block"; }, true);
+  });
+});
+
+changeBtn.addEventListener("click", () => {
+  changeBtn.style.display = "none";
+  step++;
+  if(step < texts.length) {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    kresliSrdiecko(() => {
+      typeTextByLetter(texts[step], () => {
+        if(step === texts.length-1) restartBtn.style.display = "block";
+        else changeBtn.style.display = "block";
+      }, false, true);
+    });
+  }
+});
+
+restartBtn.addEventListener("click", () => {
+  step = 0;
+  resetAnimation();
+});
+
+// 🔹 Podpora dotykov
+[startBtn, changeBtn, restartBtn].forEach(btn => {
+  btn.addEventListener("touchstart", e => { e.preventDefault(); btn.click(); });
+});
+</script>
+</body>
+</html>
